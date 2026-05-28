@@ -1,6 +1,5 @@
 const { spawn } = require('node:child_process');
 const { EventEmitter } = require('node:events');
-const readline = require('node:readline');
 const { parseLine } = require('./parser.js');
 
 class Analyzer extends EventEmitter {
@@ -33,6 +32,8 @@ class Analyzer extends EventEmitter {
     });
 
     this._ffmpeg = spawn('ffmpeg', [
+      '-v', 'verbose',
+      '-nostats',
       '-i', 'pipe:0',
       '-filter:a', 'ebur128=peak=true:framelog=verbose',
       '-f', 'null', '-',
@@ -42,10 +43,17 @@ class Analyzer extends EventEmitter {
 
     this._streamlink.stdout.pipe(this._ffmpeg.stdin);
 
-    const rl = readline.createInterface({ input: this._ffmpeg.stderr });
-    rl.on('line', (line) => {
-      const parsed = parseLine(line);
-      if (parsed) this.emit('metric', parsed);
+    let buf = '';
+    this._ffmpeg.stderr.on('data', (chunk) => {
+      buf += chunk.toString();
+      const lines = buf.split(/\r?\n|\r/);
+      buf = lines.pop();
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const parsed = parseLine(trimmed);
+        if (parsed) this.emit('metric', parsed);
+      }
     });
 
     this._streamlink.stderr.on('data', (data) => {

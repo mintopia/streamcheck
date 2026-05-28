@@ -1,9 +1,9 @@
-const VIDEO_STREAM_RE = /Stream #\d+:\d+.*Video:\s+(\w+).*?,\s+\w+,\s+(\d+x\d+).*?(\d+(?:\.\d+)?)\s+(?:fps|tbr)/;
-const AUDIO_STREAM_RE = /Stream #\d+:\d+.*Audio:\s+(\w+).*?,\s+(\d+)\s+kb\/s/;
+const VIDEO_STREAM_RE = /Stream #\d+:\d+.*Video:\s+(\w+).*?,\s+(\d{3,5}x\d{3,5})\b.*?(\d+(?:\.\d+)?)\s+(?:fps|tbr)/;
+const AUDIO_STREAM_RE = /Stream #\d+:\d+.*Audio:\s+(\w+).*?(\d+)\s+kb\/s/;
 const AUDIO_STREAM_RE_ALT = /Stream #\d+:\d+.*Audio:\s+(\w+)/;
-const EBUR128_RE = /\[Parsed_ebur128.*?\]\s+t:\s*[\d.]+\s+M:\s*([-\d.]+)\s+S:\s*([-\d.]+)\s+I:\s*([-\d.]+)/;
-const EBUR128_PEAK_RE = /\[Parsed_ebur128.*?\]\s+Peak:\s*([-\d.]+)\s+dBFS/;
-const PROGRESS_RE = /frame=\s*\d+/;
+const EBUR128_RE = /\[Parsed_ebur128.*?\]\s+t:\s*[\d.]+\s+.*?M:\s*([-\d.]+)\s+S:\s*([-\d.]+)\s+I:\s*([-\d.]+)/;
+const EBUR128_TPK_RE = /\[Parsed_ebur128.*?\]\s+t:.*TPK:\s*([-\d.]+)\s+([-\d.]+)\s+dBFS/;
+const PROGRESS_RE = /^frame=\s*\d+/;
 
 function parseLine(line) {
   let match;
@@ -46,7 +46,7 @@ function parseLine(line) {
 
   match = line.match(EBUR128_RE);
   if (match) {
-    return {
+    const result = {
       type: 'ebur128',
       data: {
         momentary: parseFloat(match[1]),
@@ -54,16 +54,13 @@ function parseLine(line) {
         integrated: parseFloat(match[3]),
       },
     };
-  }
 
-  match = line.match(EBUR128_PEAK_RE);
-  if (match) {
-    return {
-      type: 'ebur128Peak',
-      data: {
-        truePeak: parseFloat(match[1]),
-      },
-    };
+    const tpkMatch = line.match(EBUR128_TPK_RE);
+    if (tpkMatch) {
+      result.data.truePeak = Math.max(parseFloat(tpkMatch[1]), parseFloat(tpkMatch[2]));
+    }
+
+    return result;
   }
 
   if (PROGRESS_RE.test(line)) {

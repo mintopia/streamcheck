@@ -59,16 +59,18 @@ analyzer.on('metric', (parsed) => {
         console.log(`[stream] ${info.resolution || '?'} ${info.videoCodec || ''} ${info.audioCodec || ''} ${info.framerate ? info.framerate + 'fps' : ''}`.trim());
       }
       break;
-    case 'ebur128':
-      store.update({
+    case 'ebur128': {
+      const updates = {
         lufsMomentary: parsed.data.momentary,
         lufsShortTerm: parsed.data.shortTerm,
         lufsIntegrated: parsed.data.integrated,
-      });
+      };
+      if (parsed.data.truePeak != null) {
+        updates.truePeak = parsed.data.truePeak;
+      }
+      store.update(updates);
       break;
-    case 'ebur128Peak':
-      store.update({ truePeak: parsed.data.truePeak });
-      break;
+    }
     case 'progress':
       store.update({
         videoBitrate: parsed.data.videoBitrate,
