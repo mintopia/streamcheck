@@ -1,5 +1,6 @@
 const { spawn } = require('node:child_process');
 const { EventEmitter } = require('node:events');
+const { Transform } = require('node:stream');
 const { parseLine } = require('./parser.js');
 
 class Analyzer extends EventEmitter {
@@ -20,6 +21,7 @@ class Analyzer extends EventEmitter {
 
   stop() {
     this._stopping = true;
+    clearInterval(this._bitrateInterval);
     if (this._ffmpeg) this._ffmpeg.kill('SIGTERM');
     if (this._streamlink) this._streamlink.kill('SIGTERM');
   }
@@ -41,7 +43,20 @@ class Analyzer extends EventEmitter {
       stdio: ['pipe', 'ignore', 'pipe'],
     });
 
-    this._streamlink.stdout.pipe(this._ffmpeg.stdin);
+    let byteCount = 0;
+    const meter = new Transform({
+      transform(chunk, encoding, cb) {
+        byteCount += chunk.length;
+        cb(null, chunk);
+      },
+    });
+    this._streamlink.stdout.pipe(meter).pipe(this._ffmpeg.stdin);
+
+    this._bitrateInterval = setInterval(() => {
+      const kbps = Math.round((byteCount * 8) / 1000);
+      byteCount = 0;
+      this.emit('metric', { type: 'bitrate', data: { videoBitrate: kbps } });
+    }, 1000);
 
     let buf = '';
     this._ffmpeg.stderr.on('data', (chunk) => {
@@ -68,6 +83,7 @@ class Analyzer extends EventEmitter {
       const handle = (message) => {
         if (handled || this._stopping) return;
         handled = true;
+        clearInterval(this._bitrateInterval);
         this.emit('state', {
           type: 'error',
           message,

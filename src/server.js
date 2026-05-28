@@ -73,10 +73,12 @@ analyzer.on('metric', (parsed) => {
     }
     case 'progress':
       store.update({
-        videoBitrate: parsed.data.videoBitrate,
         bufferHealth: parsed.data.speed,
         frameDrops: parsed.data.frameDrops,
       });
+      break;
+    case 'bitrate':
+      store.update({ videoBitrate: parsed.data.videoBitrate });
       break;
   }
 });
