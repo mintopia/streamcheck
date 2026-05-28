@@ -7,15 +7,36 @@ const { Analyzer } = require('./analyzer.js');
 const { MetricStore } = require('./store.js');
 const { evaluateHealth, overallStatus } = require('./health.js');
 
-const config = loadConfig();
-const store = new MetricStore();
-const analyzer = new Analyzer(config.streamUrl);
+let config;
+try {
+  config = loadConfig();
+} catch {
+  config = null;
+}
 
 const app = express();
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 const server = createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
+
+if (!config) {
+  wss.on('connection', (ws) => {
+    ws.send(JSON.stringify({ type: 'no-stream' }));
+  });
+
+  const port = parseInt(process.env.PORT, 10) || 3000;
+  server.listen(port, () => {
+    console.log(`StreamCheck listening on http://localhost:${port} (no STREAM_URL configured)`);
+  });
+
+  process.on('SIGTERM', () => server.close());
+  process.on('SIGINT', () => server.close());
+  return;
+}
+
+const store = new MetricStore();
+const analyzer = new Analyzer(config.streamUrl);
 
 let currentState = { type: 'connecting', message: 'Starting...' };
 

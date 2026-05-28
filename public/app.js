@@ -59,6 +59,10 @@
       case 'error':
         setBannerState('error', data.message + (data.retryIn ? ` (retry in ${Math.round(data.retryIn / 1000)}s)` : ''));
         break;
+      case 'no-stream':
+        document.getElementById('app').hidden = true;
+        document.getElementById('no-stream').hidden = false;
+        break;
     }
   }
 
