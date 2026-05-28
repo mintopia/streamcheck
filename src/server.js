@@ -30,8 +30,13 @@ if (!config) {
     console.log(`StreamCheck listening on http://localhost:${port} (no STREAM_URL configured)`);
   });
 
-  process.on('SIGTERM', () => server.close());
-  process.on('SIGINT', () => server.close());
+  const shutdownNoConfig = () => {
+    for (const client of wss.clients) client.terminate();
+    wss.close();
+    server.close();
+  };
+  process.on('SIGTERM', shutdownNoConfig);
+  process.on('SIGINT', shutdownNoConfig);
   return;
 }
 
@@ -50,6 +55,8 @@ analyzer.on('metric', (parsed) => {
       if (!store.getUptime()) {
         store.markStarted();
         analyzer.resetReconnectDelay();
+        const info = parsed.data;
+        console.log(`[stream] ${info.resolution || '?'} ${info.videoCodec || ''} ${info.audioCodec || ''} ${info.framerate ? info.framerate + 'fps' : ''}`.trim());
       }
       break;
     case 'ebur128':
@@ -74,6 +81,7 @@ analyzer.on('metric', (parsed) => {
 
 analyzer.on('state', (state) => {
   currentState = state;
+  console.log(`[${state.type}] ${state.message}`);
   broadcast(JSON.stringify(state));
 });
 
@@ -160,6 +168,7 @@ function shutdown() {
   console.log('Shutting down...');
   clearInterval(broadcastInterval);
   analyzer.stop();
+  for (const client of wss.clients) client.terminate();
   wss.close();
   server.close();
 }

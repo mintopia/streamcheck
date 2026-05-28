@@ -62,7 +62,7 @@ body {
   min-width: 1280px;
 }
 
-.no-stream {
+#no-stream {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -71,7 +71,11 @@ body {
   font-size: 1.125rem;
 }
 
-.no-stream code {
+#no-stream[hidden] {
+  display: none;
+}
+
+#no-stream code {
   font-family: var(--font-mono);
   background: var(--bg-elevated);
   padding: 0.15em 0.4em;
