@@ -55,20 +55,28 @@ class Analyzer extends EventEmitter {
       }
     });
 
-    const onExit = (process, name) => {
-      process.on('exit', (code) => {
-        if (this._stopping) return;
+    const onProcessFailure = (proc, name) => {
+      let handled = false;
+      const handle = (message) => {
+        if (handled || this._stopping) return;
+        handled = true;
         this.emit('state', {
           type: 'error',
-          message: `${name} exited with code ${code}`,
+          message,
           retryIn: this._reconnectDelay,
         });
         this._scheduleReconnect();
+      };
+      proc.on('error', (err) => {
+        handle(`${name}: ${err.code === 'ENOENT' ? 'not found on PATH' : err.message}`);
+      });
+      proc.on('exit', (code) => {
+        handle(`${name} exited with code ${code}`);
       });
     };
 
-    onExit(this._streamlink, 'streamlink');
-    onExit(this._ffmpeg, 'ffmpeg');
+    onProcessFailure(this._streamlink, 'streamlink');
+    onProcessFailure(this._ffmpeg, 'ffmpeg');
   }
 
   _scheduleReconnect() {
