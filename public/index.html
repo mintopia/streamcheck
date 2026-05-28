@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamCheck</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="no-stream" class="no-stream" hidden>
+    <p>No stream URL configured. Set <code>STREAM_URL</code> and restart.</p>
+  </div>
+
+  <div id="app">
+    <!-- Tier 1: Status Banner -->
+    <header id="status-banner" class="status-banner status-connecting">
+      <div class="banner-left">
+        <span id="status-icon" class="status-icon">&#9679;</span>
+        <span id="status-label">CONNECTING</span>
+      </div>
+      <div class="banner-center">
+        <span id="stream-url"></span>
+      </div>
+      <div class="banner-right">
+        <span id="uptime">--:--:--</span>
+        <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
+          <span class="theme-icon-dark">&#9790;</span>
+          <span class="theme-icon-light">&#9788;</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Tier 2: Metric Panels -->
+    <section class="metrics">
+      <div class="metrics-primary">
+        <div class="metric" id="m-bitrate">
+          <span class="metric-status" id="ms-bitrate">&#9679;</span>
+          <span class="metric-label">VIDEO BITRATE</span>
+          <span class="metric-value" id="mv-bitrate">--</span>
+          <span class="metric-unit">kbps</span>
+          <span class="metric-threshold" id="mt-bitrate"></span>
+        </div>
+        <div class="metric" id="m-lufs">
+          <span class="metric-status" id="ms-lufs">&#9679;</span>
+          <span class="metric-label">LUFS MOMENTARY</span>
+          <span class="metric-value" id="mv-lufs">--</span>
+          <span class="metric-unit">LUFS</span>
+          <span class="metric-threshold" id="mt-lufs"></span>
+        </div>
+        <div class="metric" id="m-peak">
+          <span class="metric-status" id="ms-peak">&#9679;</span>
+          <span class="metric-label">TRUE PEAK</span>
+          <span class="metric-value" id="mv-peak">--</span>
+          <span class="metric-unit">dBTP</span>
+          <span class="metric-threshold">&#60; -1.0</span>
+        </div>
+        <div class="metric" id="m-buffer">
+          <span class="metric-status" id="ms-buffer">&#9679;</span>
+          <span class="metric-label">BUFFER HEALTH</span>
+          <span class="metric-value" id="mv-buffer">--</span>
+          <span class="metric-unit">x</span>
+          <span class="metric-threshold">&ge; 0.95</span>
+        </div>
+      </div>
+      <div class="metrics-secondary">
+        <div class="metric-sm">
+          <span class="metric-label">AUDIO</span>
+          <span class="metric-value" id="mv-audio">--</span>
+          <span class="metric-unit">kbps</span>
+          <span class="metric-detail" id="md-audio-codec">--</span>
+        </div>
+        <div class="metric-sm">
+          <span class="metric-label">LUFS SHORT</span>
+          <span class="metric-value" id="mv-lufs-short">--</span>
+          <span class="metric-unit">LUFS</span>
+        </div>
+        <div class="metric-sm">
+          <span class="metric-label">LUFS INT</span>
+          <span class="metric-value" id="mv-lufs-int">--</span>
+          <span class="metric-unit">LUFS</span>
+        </div>
+        <div class="metric-sm">
+          <span class="metric-label">RESOLUTION</span>
+          <span class="metric-value" id="mv-resolution">--</span>
+          <span class="metric-detail" id="md-video-codec">--</span>
+        </div>
+        <div class="metric-sm">
+          <span class="metric-label">FPS</span>
+          <span class="metric-value" id="mv-fps">--</span>
+        </div>
+        <div class="metric-sm">
+          <span class="metric-label">DROPS</span>
+          <span class="metric-value" id="mv-drops">0</span>
+          <span class="metric-status" id="ms-drops">&#9679;</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tier 3: Charts -->
+    <section class="charts">
+      <div class="chart-controls">
+        <button class="chart-window active" data-window="300">5 min</button>
+        <button class="chart-window" data-window="900">15 min</button>
+        <button class="chart-window" data-window="1800">30 min</button>
+      </div>
+      <div class="chart-row">
+        <div class="chart-container">
+          <div class="chart-header">VIDEO BITRATE</div>
+          <canvas id="chart-bitrate" width="600" height="200"></canvas>
+        </div>
+        <div class="chart-container">
+          <div class="chart-header">LUFS MOMENTARY</div>
+          <canvas id="chart-lufs" width="600" height="200"></canvas>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
